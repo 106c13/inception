@@ -51,6 +51,14 @@ services:
       - "60000-60010:60000-60010"
     restart: always
 
+  website:
+    build: ./requirements/bonus/website
+    networks:
+      - inception
+    ports:
+      - "5000:5000"
+    restart: always
+
 volumes:
   db:
     driver: local

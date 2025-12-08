@@ -1,11 +1,11 @@
 FROM debian:latest
 
 RUN apt update && \
-	apt install python3 python3-pip -y && \
-	pip3 install flask
+    apt install -y python3 python3-pip
 
-RUN mkdir /src/
+RUN pip3 install --break-system-packages flask
 
-COPY src* /src/
+WORKDIR /src
+COPY src/ /src/
 
-CMD ["python3", "/src/main.py"]
+CMD ["python3", "main.py"]

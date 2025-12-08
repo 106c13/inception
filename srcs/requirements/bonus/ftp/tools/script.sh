@@ -37,5 +37,4 @@ local_root=/var/www/html/wordpress
 EOF
 
 echo "[ftp] starting vsftpd..."
-#exec /usr/sbin/vsftpd /etc/vsftpd.conf
-tail -f /dev/null
+exec /usr/sbin/vsftpd /etc/vsftpd.conf
