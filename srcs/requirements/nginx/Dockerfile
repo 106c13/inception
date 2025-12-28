@@ -1,4 +1,4 @@
-FROM debian:latest
+FROM debian:bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -8,7 +8,5 @@ COPY tools/script.sh /
 COPY tools/nginx.conf /etc/nginx/conf.d/default.conf
 
 RUN chmod +x /script.sh
-
-EXPOSE 80
 
 CMD ["/script.sh"]
