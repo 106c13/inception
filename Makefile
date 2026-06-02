@@ -1,15 +1,17 @@
 NAME        := inception
 COMPOSE     := docker compose -f srcs/docker-compose.yml
-DATA_DIR    := /home/necro/data
+DATA_DIR    := /tmp/haaghaja/data
 DB_DIR      := $(DATA_DIR)/db
 WP_DIR      := $(DATA_DIR)/wp
+PORTAINER_DIR := $(DATA_DIR)/portainer
 
 all: up
 
 dirs:
 	@mkdir -p $(DB_DIR)
 	@mkdir -p $(WP_DIR)
-	@echo "✔ Data directories created"
+	@mkdir -p $(PORTAINER_DIR)
+	@echo "✔ Data directories created at $(DATA_DIR)"
 
 build: dirs
 	$(COMPOSE) build
@@ -24,9 +26,10 @@ clean:
 	$(COMPOSE) down -v
 
 fclean: clean
-	$(COMPOSE) down --rmi all --remove-orphans
-	@docker image prune -f
-	@echo "✔ Full cleanup complete"
+	$(COMPOSE) down --rmi all --remove-orphans 2>/dev/null || true
+	@docker system prune -f 2>/dev/null || true
+	@sudo rm -rf $(DATA_DIR)
+	@echo "✔ Full cleanup complete (removed $(DATA_DIR))"
 
 logs:
 	$(COMPOSE) logs -f

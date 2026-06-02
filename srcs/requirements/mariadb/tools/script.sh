@@ -1,48 +1,38 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
-DATADIR="/var/lib/mysql"
+# Initialize database if not exists
+if [ ! -d "/var/lib/mysql/mysql" ]; then
+    mysql_install_db --user=mysql --datadir=/var/lib/mysql
+fi
 
-mkdir -p "$DATADIR"
-chown -R mysql:mysql "$DATADIR"
+# Start MariaDB temporarily
+mysqld --user=mysql --datadir=/var/lib/mysql --skip-networking &
+pid="$!"
 
-# FIX: required for socket
-mkdir -p /run/mysqld
-chown -R mysql:mysql /run/mysqld
-
-# Detect first-time startup
-if [ ! -f "$DATADIR/.initialized" ]; then
-  echo "[mariadb] initializing database directory..."
-  mariadb-install-db --user=mysql --datadir="$DATADIR" >/dev/null
-
-  echo "[mariadb] starting temporary server for init..."
-  mariadbd --skip-networking --socket=/run/mysqld/mysqld.sock \
-           --user=mysql --datadir="$DATADIR" &
-  TEMP_PID=$!
-
-  # wait for server
-  for i in {1..20}; do
-    if mysqladmin --socket=/run/mysqld/mysqld.sock ping &>/dev/null; then
-      break
-    fi
+# Wait for socket
+while [ ! -S /run/mysqld/mysqld.sock ]; do
     sleep 1
-  done
+done
 
-  echo "[mariadb] running initial SQL setup..."
-  mysql --socket=/run/mysqld/mysqld.sock <<EOF
-CREATE DATABASE IF NOT EXISTS ${WORDPRESS_DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS '${WORDPRESS_DB_USER}'@'%' IDENTIFIED BY '${WORDPRESS_DB_PASSWORD}';
-GRANT ALL PRIVILEGES ON ${WORDPRESS_DB_NAME}.* TO '${WORDPRESS_DB_USER}'@'%';
-ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+# Secure installation
+mysql -u root <<EOF
+DELETE FROM mysql.user WHERE User='';
+DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+DROP DATABASE IF EXISTS test;
+DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
+FLUSH PRIVILEGES;
+
+CREATE DATABASE IF NOT EXISTS $WORDPRESS_DB_NAME;
+CREATE USER IF NOT EXISTS '$WORDPRESS_DB_USER'@'%' IDENTIFIED BY '$WORDPRESS_DB_PASSWORD';
+GRANT ALL PRIVILEGES ON $WORDPRESS_DB_NAME.* TO '$WORDPRESS_DB_USER'@'%';
+ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD';
 FLUSH PRIVILEGES;
 EOF
 
-  touch "$DATADIR/.initialized"
+# Kill temporary instance and start proper
+kill "$pid"
+wait "$pid" 2>/dev/null || true
 
-  echo "[mariadb] stopping temporary server..."
-  mysqladmin --socket=/run/mysqld/mysqld.sock -uroot -p"${MYSQL_ROOT_PASSWORD}" shutdown || true
-  wait $TEMP_PID 2>/dev/null || true
-fi
-
-echo "[mariadb] starting MariaDB..."
-exec mariadbd --user=mysql --datadir="$DATADIR" --bind-address=0.0.0.0
+# Start MariaDB in foreground
+exec mysqld --user=mysql

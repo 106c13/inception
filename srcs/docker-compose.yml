@@ -1,5 +1,6 @@
 services:
   mariadb:
+    container_name: mariadb
     build: ./requirements/mariadb
     env_file:
       - .env
@@ -8,8 +9,25 @@ services:
     networks:
       - inception
     restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      timeout: 5s
+      retries: 10
+
+  redis:
+    container_name: redis
+    build: ./requirements/bonus/redis
+    networks:
+      - inception
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   wordpress:
+    container_name: wordpress
     build: ./requirements/wordpress
     env_file:
       - .env
@@ -18,10 +36,12 @@ services:
     networks:
       - inception
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     restart: always
 
   nginx:
+    container_name: nginx
     build: ./requirements/nginx
     env_file:
       - .env
@@ -36,6 +56,7 @@ services:
     restart: always
 
   ftp:
+    container_name: ftp
     build: ./requirements/bonus/ftp
     env_file:
       - .env
@@ -51,6 +72,7 @@ services:
     restart: always
 
   website:
+    container_name: website
     build: ./requirements/bonus/website
     networks:
       - inception
@@ -58,19 +80,55 @@ services:
       - "5000:5000"
     restart: always
 
+  adminer:
+    container_name: adminer
+    build: ./requirements/bonus/adminer
+    networks:
+      - inception
+    depends_on:
+      - mariadb
+    ports:
+      - "8080:8080"
+    restart: always
+    environment:
+      ADMINER_DEFAULT_SERVER: mariadb
+        
+  portainer:
+    container_name: portainer
+    build: ./requirements/bonus/portainer
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - inception
+    ports:
+      - "9000:9000"
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   db:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/necro/data/db/
+      device: /home/haaghaja/data/db/
   wp:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/necro/data/wp/
+      device: /home/haaghaja/data/wp/
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/haaghaja/data/redis/
 
 networks:
   inception:

@@ -1,49 +1,45 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
-WEBROOT="/var/www/html"
-WPDIR="$WEBROOT/wordpress"
+while ! mysqladmin ping -h"$WORDPRESS_DB_HOST" --silent; do
+    sleep 1
+done
 
-if [ ! -d "$WPDIR" ]; then
-  mkdir -p "$WEBROOT"
-  cd "$WEBROOT"
-  echo "Downloading WordPress..."
-  curl -s -O https://wordpress.org/latest.tar.gz
-  echo "Extracting WordPress..."
-  tar -xzf latest.tar.gz
-  rm latest.tar.gz
-  echo "Checking contents of $WEBROOT:"
-  ls -l "$WEBROOT"
-  echo "Changing ownership..."
-  chown -R www-data:www-data "$WPDIR"
+while ! redis-cli -h redis ping; do
+    echo "Waiting for Redis..."
+    sleep 1
+done
+
+if [ ! -f /var/www/html/wp-config.php ]; then
+    wp core download --path=/var/www/html --allow-root
+    wp config create --path=/var/www/html \
+        --dbname="$WORDPRESS_DB_NAME" \
+        --dbuser="$WORDPRESS_DB_USER" \
+        --dbpass="$WORDPRESS_DB_PASSWORD" \
+        --dbhost="$WORDPRESS_DB_HOST" \
+        --allow-root
+    
+    wp config set WP_REDIS_HOST "redis" --allow-root
+    wp config set WP_REDIS_PORT "6379" --allow-root
+    wp config set WP_CACHE_KEY_SALT "$DOMAIN" --allow-root
+    
+    wp plugin install redis-cache --activate --allow-root
+    
+    wp redis enable --allow-root
+    
+    wp core install --path=/var/www/html \
+        --url="https://$DOMAIN" \
+        --title="Inception with Redis Cache" \
+        --admin_user="$WP_ADMIN_USER" \
+        --admin_password="$WP_ADMIN_PASSWORD" \
+        --admin_email="$WP_ADMIN_EMAIL" \
+        --allow-root
+    
+    wp user create --path=/var/www/html \
+        "$WP_USER" "$WP_USER_EMAIL" \
+        --user_pass="$WP_USER_PASSWORD" \
+        --role=author \
+        --allow-root
 fi
-
-cp "$WPDIR/wp-config-sample.php" "$WPDIR/wp-config.php"
-
-
-sed -i "s/database_name_here/${WORDPRESS_DB_NAME}/" "$WPDIR/wp-config.php"
-sed -i "s/username_here/${WORDPRESS_DB_USER}/" "$WPDIR/wp-config.php"
-sed -i "s/password_here/${WORDPRESS_DB_PASSWORD}/" "$WPDIR/wp-config.php"
-sed -i "s/localhost/${WORDPRESS_DB_HOST}/" "$WPDIR/wp-config.php"
-
-wp core install \
-  --url="https://${DOMAIN}" \
-  --title="Inception" \
-  --admin_user="$WP_ADMIN_USER" \
-  --admin_password="$WP_ADMIN_PASSWORD" \
-  --admin_email="$WP_ADMIN_EMAIL" \
-  --path="$WPDIR" \
-  --allow-root
-
-wp user create \
-  "$WP_USER" "$WP_USER_EMAIL" \
-  --role=subscriber \
-  --user_pass="$WP_USER_PASSWORD" \
-  --path="$WPDIR" \
-  --allow-root
-
-echo "WordPress installed and configured successfully."
-
-sed -i 's|^listen = .*|listen = 0.0.0.0:9000|' /etc/php/8.2/fpm/pool.d/www.conf
 
 exec php-fpm8.2 -F

@@ -9,4 +9,6 @@ RUN apt update && \
 COPY tools/script.sh /script.sh
 RUN chmod +x /script.sh
 
+EXPOSE 21 60000-60010
+
 CMD ["/script.sh"]
