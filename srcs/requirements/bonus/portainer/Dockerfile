@@ -9,9 +9,13 @@ RUN apt update && \
 
 RUN wget -q https://github.com/portainer/portainer/releases/download/2.21.4/portainer-2.21.4-linux-amd64.tar.gz && \
     tar -xzf portainer-2.21.4-linux-amd64.tar.gz && \
-    rm portainer-2.21.4-linux-amd64.tar.gz && \
-    mv portainer /usr/local/bin/portainer && \
-    chmod +x /usr/local/bin/portainer
+    rm portainer-2.21.4-linux-amd64.tar.gz
+
+RUN ls -la /portainer/
+
+RUN mv /portainer/portainer /usr/local/bin/portainer && \
+    chmod +x /usr/local/bin/portainer && \
+    rm -rf /portainer
 
 RUN mkdir -p /data
 

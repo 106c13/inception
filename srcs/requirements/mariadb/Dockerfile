@@ -6,6 +6,10 @@ RUN apt update && \
     apt install -y mariadb-server mariadb-client && \
     apt clean && rm -rf /var/lib/apt/lists/*
 
+# Create the socket directory
+RUN mkdir -p /run/mysqld && \
+    chown -R mysql:mysql /run/mysqld
+
 COPY tools/script.sh /script.sh
 RUN chmod +x /script.sh
 

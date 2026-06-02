@@ -14,7 +14,7 @@ RUN mkdir -p /etc/nginx/ssl && \
     -out /etc/nginx/ssl/haaghaja.42.fr.crt \
     -subj "/C=FR/ST=Paris/L=Paris/O=42/CN=haaghaja.42.fr"
 
-COPY tools/nginx.conf /etc/nginx/conf.d/default.conf
+COPY conf/nginx.conf /etc/nginx/conf.d/default.conf
 COPY tools/script.sh /script.sh
 
 RUN chmod +x /script.sh
