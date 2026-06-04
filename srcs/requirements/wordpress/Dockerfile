@@ -13,17 +13,20 @@ RUN apt update && apt install -y \
     less \
     unzip \
     mariadb-client \
-    netcat-openbsd \
+    redis-tools \
     && apt clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Install WP-CLI
 RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
     chmod +x wp-cli.phar && \
     mv wp-cli.phar /usr/local/bin/wp
 
+# Copy entrypoint script
 COPY tools/script.sh /script.sh
 RUN chmod +x /script.sh
 
+# Configure PHP-FPM to listen on port 9000
 RUN sed -i 's/listen = \/run\/php\/php8.2-fpm.sock/listen = 9000/' /etc/php/8.2/fpm/pool.d/www.conf && \
     sed -i 's/;listen.owner = www-data/listen.owner = www-data/' /etc/php/8.2/fpm/pool.d/www.conf && \
     sed -i 's/;listen.group = www-data/listen.group = www-data/' /etc/php/8.2/fpm/pool.d/www.conf && \

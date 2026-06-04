@@ -4,7 +4,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt update && \
     apt install -y vsftpd openssl && \
-    apt clean && rm -rf /var/lib/apt/lists/*
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /var/run/vsftpd/empty && \
+    mkdir -p /var/log/vsftpd
 
 COPY tools/script.sh /script.sh
 RUN chmod +x /script.sh

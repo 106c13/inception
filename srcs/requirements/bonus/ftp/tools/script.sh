@@ -1,5 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 set -e
+
+# Create required directories for vsftpd
+mkdir -p /var/run/vsftpd/empty
+mkdir -p /var/log/vsftpd
 
 # Create SSL certs for vsftpd
 mkdir -p /etc/ssl/private
@@ -11,7 +15,7 @@ openssl req -x509 -nodes -days 365 \
 
 # Create FTP user if not exists
 if ! id "$FTP_USER" &>/dev/null; then
-    useradd -m "$FTP_USER"
+    useradd -m -s /bin/bash "$FTP_USER"
     echo "$FTP_USER:$FTP_PASSWORD" | chpasswd
 fi
 
@@ -29,8 +33,9 @@ chroot_local_user=YES
 allow_writeable_chroot=YES
 seccomp_sandbox=NO
 
-# HERE - This is where local_root goes:
-local_root=/var/www/html
+# Required directories
+secure_chroot_dir=/var/run/vsftpd/empty
+xferlog_file=/var/log/vsftpd/vsftpd.log
 
 # SSL configuration
 ssl_enable=YES
@@ -40,16 +45,21 @@ ssl_tlsv1=YES
 ssl_sslv2=NO
 ssl_sslv3=NO
 require_ssl_reuse=NO
-force_local_logins_ssl=YES
-force_local_data_ssl=YES
+force_local_logins_ssl=NO
+force_local_data_ssl=NO
 
 # Passive mode
 pasv_enable=YES
 pasv_min_port=60000
 pasv_max_port=60010
-# pasv_address=YOUR_HOST_IP_HERE
+pasv_address=127.0.0.1
 
+# User settings
+local_root=/var/www/html
 EOF
+
+# Fix permissions
+chmod 755 /var/run/vsftpd/empty
 
 echo "[ftp] starting vsftpd..."
 exec /usr/sbin/vsftpd /etc/vsftpd.conf
