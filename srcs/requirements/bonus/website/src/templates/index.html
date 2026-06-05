@@ -10,6 +10,7 @@
       --card-border:#e3e7ee;
       --accent:#2b7be4;
       --redis-accent:#e34f21;
+      --phpmyadmin-accent:#0078d7;
       --muted:#6b7280;
       --shadow: 0 6px 18px rgba(27,40,60,0.08);
     }
@@ -59,6 +60,7 @@
     .card .role{ color:var(--muted); font-size:13px; }
     .badge{ background:rgba(43,123,228,0.08); color:var(--accent); padding:4px 8px; border-radius:999px; font-weight:600; font-size:12px; }
     .badge-redis{ background:rgba(227,79,33,0.08); color:var(--redis-accent); }
+    .badge-phpmyadmin{ background:rgba(0,120,215,0.08); color:var(--phpmyadmin-accent); }
 
     /* positions for arrows (simple) */
     .col-left{ grid-column: 1; }
@@ -235,6 +237,20 @@
             <li><strong>Features:</strong> SQL queries, table management</li>
           </ul>
         </div>
+
+        <!-- phpMyAdmin -->
+        <div class="card" id="svc-phpmyadmin">
+          <div class="title">
+            <span class="badge badge-phpmyadmin">phpmyadmin</span>
+            <span>🗄️ database management</span>
+          </div>
+          <div class="role">alternative DB admin interface</div>
+          <ul class="props">
+            <li><strong>Ports:</strong> 8081 → 8081 (host:container)</li>
+            <li><strong>Target DB:</strong> mariadb:3306</li>
+            <li><strong>Features:</strong> Advanced SQL, import/export</li>
+          </ul>
+        </div>
         
       </div>
     </div>
@@ -283,6 +299,7 @@
         <li>Redis cache shows 82 hits / 45 misses (64% hit rate)</li>
         <li>FTP requires SSL/TLS - use lftp or FileZilla for connection</li>
         <li>WordPress admin: in42ception / password from .env</li>
+        <li>phpMyAdmin access: http://localhost:8081 (Server: mariadb)</li>
       </ul>
     </footer>
   </div>
