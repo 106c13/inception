@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# Create the required directory for the socket
+# Create required directories
 mkdir -p /run/mysqld
 chown -R mysql:mysql /run/mysqld
 
@@ -11,29 +11,26 @@ if [ ! -d "/var/lib/mysql/mysql" ]; then
     mysql_install_db --user=mysql --datadir=/var/lib/mysql
 fi
 
-# Start MariaDB temporarily
+# Start MariaDB temporarily without password
 echo "Starting MariaDB temporarily..."
-mysqld --user=mysql --datadir=/var/lib/mysql --skip-networking --socket=/run/mysqld/mysqld.sock &
+mysqld --user=mysql --datadir=/var/lib/mysql --skip-networking --skip-grant-tables &
 pid="$!"
 
 # Wait for socket
+echo "Waiting for socket..."
 while [ ! -S /run/mysqld/mysqld.sock ]; do
     sleep 1
 done
 
-# Secure installation and create WordPress database
 echo "Configuring MariaDB..."
-mysql -u root --socket=/run/mysqld/mysqld.sock <<EOF
-DELETE FROM mysql.user WHERE User='';
-DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
-DROP DATABASE IF EXISTS test;
-DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
-FLUSH PRIVILEGES;
 
-CREATE DATABASE IF NOT EXISTS $WORDPRESS_DB_NAME;
-CREATE USER IF NOT EXISTS '$WORDPRESS_DB_USER'@'%' IDENTIFIED BY '$WORDPRESS_DB_PASSWORD';
-GRANT ALL PRIVILEGES ON $WORDPRESS_DB_NAME.* TO '$WORDPRESS_DB_USER'@'%';
-ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD';
+# Set root password and create database
+mysql -u root --socket=/run/mysqld/mysqld.sock <<EOF
+FLUSH PRIVILEGES;
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+CREATE DATABASE IF NOT EXISTS ${WORDPRESS_DB_NAME};
+CREATE USER IF NOT EXISTS '${WORDPRESS_DB_USER}'@'%' IDENTIFIED BY '${WORDPRESS_DB_PASSWORD}';
+GRANT ALL PRIVILEGES ON ${WORDPRESS_DB_NAME}.* TO '${WORDPRESS_DB_USER}'@'%';
 FLUSH PRIVILEGES;
 EOF
 
@@ -43,5 +40,5 @@ wait "$pid" 2>/dev/null || true
 
 echo "MariaDB setup complete. Starting MariaDB..."
 
-# Start MariaDB in foreground (PID 1)
-exec mysqld --user=mysql --socket=/run/mysqld/mysqld.sock
+# Start MariaDB in foreground
+exec mysqld --user=mysql --bind-address=0.0.0.0 --port=3306
