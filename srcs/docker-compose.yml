@@ -1,5 +1,6 @@
 services:
   mariadb:
+    image: mariadb
     container_name: mariadb
     build: ./requirements/mariadb
     env_file:
@@ -16,6 +17,7 @@ services:
       retries: 10
 
   redis:
+    image: redis
     container_name: redis
     build: ./requirements/bonus/redis
     volumes:
@@ -30,6 +32,7 @@ services:
       retries: 5
 
   wordpress:
+    image: wordpress
     container_name: wordpress
     build: ./requirements/wordpress
     env_file:
@@ -52,6 +55,7 @@ services:
     restart: always
 
   nginx:
+    image: nginx
     container_name: nginx
     build: ./requirements/nginx
     env_file:
@@ -67,6 +71,7 @@ services:
     restart: always
 
   ftp:
+    image: ftp
     container_name: ftp
     build: ./requirements/bonus/ftp
     env_file:
@@ -83,6 +88,7 @@ services:
     restart: always
 
   website:
+    image: website
     container_name: website
     build: ./requirements/bonus/website
     networks:
@@ -92,6 +98,7 @@ services:
     restart: always
 
   adminer:
+    image: adminer
     container_name: adminer
     build: ./requirements/bonus/adminer
     networks:
@@ -105,6 +112,7 @@ services:
       ADMINER_DEFAULT_SERVER: mariadb
    
   phpmyadmin:
+    image: phpmyadmin
     container_name: phpmyadmin
     build: ./requirements/bonus/phpmyadmin
     networks:
