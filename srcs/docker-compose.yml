@@ -33,6 +33,12 @@ services:
     build: ./requirements/wordpress
     env_file:
       - .env
+    environment:
+      - WORDPRESS_DB_HOST=${WORDPRESS_DB_HOST}
+      - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME}
+      - WORDPRESS_DB_USER=${WORDPRESS_DB_USER}
+      - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
+      - DOMAIN=${DOMAIN}
     volumes:
       - wp:/var/www/html
     networks:
@@ -112,25 +118,19 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /tmp/haaghaja/data/db/
+      device: /home/haaghaja/data/db/
   wp:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /tmp/haaghaja/data/wp/
+      device: /home/haaghaja/data/wp/
   redis_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /tmp/haaghaja/data/redis/
-  portainer_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /tmp/haaghaja/data/portainer/
+      device: /home/haaghaja/data/redis/
 
 networks:
   inception:

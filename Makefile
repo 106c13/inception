@@ -1,10 +1,9 @@
 NAME        := inception
 COMPOSE     := docker compose -f srcs/docker-compose.yml
-DATA_DIR    := /tmp/haaghaja/data
+DATA_DIR    := /home/haaghaja/data
 DB_DIR      := $(DATA_DIR)/db
 WP_DIR      := $(DATA_DIR)/wp
 REDIS_DIR   := $(DATA_DIR)/redis
-PORTAINER_DIR := $(DATA_DIR)/portainer
 
 all: up
 
@@ -12,7 +11,6 @@ dirs:
 	@mkdir -p $(DB_DIR)
 	@mkdir -p $(WP_DIR)
 	@mkdir -p $(REDIS_DIR)
-	@mkdir -p $(PORTAINER_DIR)
 	@echo "✔ Data directories created at $(DATA_DIR)"
 
 build: dirs
